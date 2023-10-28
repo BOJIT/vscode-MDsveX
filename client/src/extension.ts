@@ -14,6 +14,7 @@ let client: LanguageClient;
 const htmlLanguageService = getLanguageService();
 
 export function activate(context: ExtensionContext) {
+    return;
 	// The server is implemented in node
 	const serverModule = context.asAbsolutePath(path.join('server', 'out', 'server.js'));
 

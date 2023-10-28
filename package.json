@@ -1,6 +1,7 @@
 {
     "name": "vscode-mdsvex",
     "description": "Language support for MDsveX",
+    "private": true,
     "author": "James Bennion-Pedley, pngwn",
     "license": "MIT",
     "version": "1.0.0",
@@ -12,18 +13,30 @@
     "categories": [
         "Programming Languages"
     ],
-    "keywords": [],
+    "keywords": [
+        "markdown",
+        "vscode",
+        "svelte",
+        "MDsveX",
+        "MDX"
+    ],
     "engines": {
-        "vscode": "^1.43.0"
+        "vscode": "^1.64.0"
     },
     "activationEvents": [
-        "onLanguage:MDsveX"
+        "onLanguage:svelte"
     ],
+    "icon": "./assets/icon.png",
     "main": "./client/out/extension",
     "contributes": {
         "languages": [
             {
                 "id": "MDsveX",
+                "configuration": "./language-configuration.json",
+                "icon": {
+                    "light": "./assets/icon.png",
+                    "dark": "./assets/icon.png"
+                },
                 "extensions": [
                     ".svx",
                     ".svelte.md"
@@ -33,8 +46,14 @@
         "grammars": [
             {
                 "language": "MDsveX",
-                "scopeName": "text.MDsveX.basic",
-                "path": "./syntaxes/html1.tmLanguage.json"
+                "scopeName": "text.html.markdown.svelte",
+                "path": "./syntaxes/MDsveX.tmLanguage.json",
+                "embeddedLanguages": {
+                    "source.svelte": "svelte",
+                    "source.js": "javascript",
+                    "text.html.markdown": "markdown",
+                    "meta.tag.svelte": "svelte"
+                }
             }
         ]
     },
