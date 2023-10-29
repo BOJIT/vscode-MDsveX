@@ -39,7 +39,7 @@ export function activate(context: ExtensionContext) {
     });
 
     const clientOptions: LanguageClientOptions = {
-        documentSelector: [{ scheme: 'file', language: 'html1' }],
+        documentSelector: [{ scheme: 'file', language: 'svelte' }],
         middleware: {
             provideCompletionItem: async (document, position, context, token, next) => {
                 // If not in `<style>`, do not perform request forwarding
@@ -66,8 +66,8 @@ export function activate(context: ExtensionContext) {
 
     // Create the language client and start the client.
     client = new LanguageClient(
-        'languageServerExample',
-        'Language Server Example',
+        'MDsveX',
+        'Request forwarding for MDsveX (Svelte in Markdown)',
         serverOptions,
         clientOptions
     );

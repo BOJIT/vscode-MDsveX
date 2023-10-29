@@ -1,22 +1,22 @@
 {
-    "name": "lsp-sample-client",
-    "description": "VSCode part of a language server",
-    "author": "Microsoft Corporation",
+    "name": "mdsvex-client",
+    "description": "Handle MDsveX request forwarding",
+    "author": "Microsoft Corporation, BOJIT",
     "license": "MIT",
-    "version": "0.0.1",
+    "version": "1.0.0",
     "publisher": "vscode",
     "repository": {
         "type": "git",
-        "url": "https://github.com/Microsoft/vscode-extension-samples"
+        "url": "https://github.com/BOJIT/vscode-MDsveX"
     },
     "engines": {
-        "vscode": "^1.43.0"
+        "vscode": "^1.64.0"
     },
     "dependencies": {
         "vscode-html-languageservice": "^3.0.3",
         "vscode-languageclient": "^6.1.3"
     },
     "devDependencies": {
-        "@types/vscode": "^1.43.0"
+        "@types/vscode": "^1.64.0"
     }
 }

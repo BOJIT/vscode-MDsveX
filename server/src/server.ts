@@ -4,6 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 
 import { getLanguageService } from 'vscode-html-languageservice';
+import { createLanguageService } from 'vscode-markdown-languageservice';
 import { createConnection, InitializeParams, ProposedFeatures, TextDocuments, TextDocumentSyncKind } from 'vscode-languageserver';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 
