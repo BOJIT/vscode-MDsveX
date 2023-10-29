@@ -52,6 +52,7 @@
                     "source.svelte": "svelte",
                     "source.js": "javascript",
                     "text.html.markdown": "markdown",
+                    "meta.embedded.block.frontmatter": "yaml",
                     "meta.tag.svelte": "svelte"
                 }
             }

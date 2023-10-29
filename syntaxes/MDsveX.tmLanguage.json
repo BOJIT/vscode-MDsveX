@@ -71,7 +71,8 @@
             "contentName": "text.html.markdown",
             "patterns": [
                 {
-                    "include": "text.html.markdown"
+                    "include": "text.html.markdown",
+                    "meta.embedded.block.frontmatter": "yaml"
                 }
             ]
         }
