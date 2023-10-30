@@ -8,13 +8,12 @@ import { commands, CompletionList, ExtensionContext, Uri, workspace } from 'vsco
 import { getLanguageService } from 'vscode-html-languageservice';
 import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind } from 'vscode-languageclient';
 import { getCSSVirtualContent, isInsideStyleRegion } from './embeddedSupport';
+import { isInsideSvelteRegion } from './embeddedSvelte';
 
 let client: LanguageClient;
-
 const htmlLanguageService = getLanguageService();
 
 export function activate(context: ExtensionContext) {
-    return;
     // The server is implemented in node
     const serverModule = context.asAbsolutePath(path.join('server', 'out', 'server.js'));
 
@@ -32,16 +31,23 @@ export function activate(context: ExtensionContext) {
 
     workspace.registerTextDocumentContentProvider('embedded-content', {
         provideTextDocumentContent: uri => {
-            const originalUri = uri.path.slice(1).slice(0, -4);
+            const originalUri = uri.path.slice(1).slice(0, -7);
             const decodedUri = decodeURIComponent(originalUri);
             return virtualDocumentContents.get(decodedUri);
         }
     });
 
     const clientOptions: LanguageClientOptions = {
-        documentSelector: [{ scheme: 'file', language: 'svelte' }],
+        documentSelector: [{ scheme: 'file', language: 'MDsveX' }],
         middleware: {
             provideCompletionItem: async (document, position, context, token, next) => {
+                console.log(virtualDocumentContents);
+
+                // TODO check if we currently are in a 'Svelte-y' region
+                if (!isInsideSvelteRegion(htmlLanguageService, document.getText(), document.offsetAt(position))) {
+                    console.log("Svelte");
+                }
+
                 // If not in `<style>`, do not perform request forwarding
                 if (!isInsideStyleRegion(htmlLanguageService, document.getText(), document.offsetAt(position))) {
                     return await next(document, position, context, token);
@@ -50,9 +56,7 @@ export function activate(context: ExtensionContext) {
                 const originalUri = document.uri.toString(true);
                 virtualDocumentContents.set(originalUri, getCSSVirtualContent(htmlLanguageService, document.getText()));
 
-                const vdocUriString = `embedded-content://css/${encodeURIComponent(
-                    originalUri
-                )}.css`;
+                const vdocUriString = `embedded-content://svelte/${encodeURIComponent(originalUri)}.svelte`;
                 const vdocUri = Uri.parse(vdocUriString);
                 return await commands.executeCommand<CompletionList>(
                     'vscode.executeCompletionItemProvider',

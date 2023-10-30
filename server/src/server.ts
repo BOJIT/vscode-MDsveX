@@ -4,7 +4,6 @@
  * ------------------------------------------------------------------------------------------ */
 
 import { getLanguageService } from 'vscode-html-languageservice';
-import { createLanguageService } from 'vscode-markdown-languageservice';
 import { createConnection, InitializeParams, ProposedFeatures, TextDocuments, TextDocumentSyncKind } from 'vscode-languageserver';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 
@@ -19,28 +18,28 @@ const documents: TextDocuments<TextDocument> = new TextDocuments(TextDocument);
 const htmlLanguageService = getLanguageService();
 
 connection.onInitialize((_params: InitializeParams) => {
-	return {
-		capabilities: {
-			textDocumentSync: TextDocumentSyncKind.Full,
-			// Tell the client that the server supports code completion
-			completionProvider: {
-				resolveProvider: false
-			}
-		}
-	};
+    return {
+        capabilities: {
+            textDocumentSync: TextDocumentSyncKind.Full,
+            // Tell the client that the server supports code completion
+            completionProvider: {
+                resolveProvider: false
+            }
+        }
+    };
 });
 
 connection.onCompletion(async (textDocumentPosition, token) => {
-	const document = documents.get(textDocumentPosition.textDocument.uri);
-	if (!document) {
-		return null;
-	}
+    const document = documents.get(textDocumentPosition.textDocument.uri);
+    if (!document) {
+        return null;
+    }
 
-	return htmlLanguageService.doComplete(
-		document,
-		textDocumentPosition.position,
-		htmlLanguageService.parseHTMLDocument(document)
-	);
+    return htmlLanguageService.doComplete(
+        document,
+        textDocumentPosition.position,
+        htmlLanguageService.parseHTMLDocument(document)
+    );
 });
 
 documents.listen(connection);
