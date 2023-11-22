@@ -30,6 +30,8 @@ connection.onInitialize((_params: InitializeParams) => {
 });
 
 connection.onCompletion(async (textDocumentPosition, token) => {
+    // TODO add MDsveX-specific tooling here
+
     const document = documents.get(textDocumentPosition.textDocument.uri);
     if (!document) {
         return null;

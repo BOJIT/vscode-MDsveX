@@ -23,7 +23,8 @@ export function isInsideSvelteRegion(
     documentText: string,
     offset: number
 ) {
-    return true;
+    // return true;
+    return false;
 }
 
 export function getVirtualSvelteDocument(document: any) {
@@ -31,5 +32,6 @@ export function getVirtualSvelteDocument(document: any) {
 }
 
 export function getVirtualMarkdownDocument(document: any) {
-
+    // Strip out anything between unescaped curly-braces
+    return document.getText();
 }
