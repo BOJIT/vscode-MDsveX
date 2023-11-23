@@ -7,13 +7,17 @@ import * as path from 'path';
 import { commands, CompletionList, ExtensionContext, Uri, workspace } from 'vscode';
 import { getLanguageService } from 'vscode-html-languageservice';
 import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind } from 'vscode-languageclient';
-import { getCSSVirtualContent, isInsideStyleRegion } from './embeddedSupport';
-import { isInsideSvelteRegion, getVirtualMarkdownDocument, getVirtualSvelteDocument } from './embeddedSvelte';
+import {
+    isInsideSvelteRegion,
+    getVirtualMarkdownDocument,
+    getVirtualSvelteDocument,
+    loadTextmateGrammar,
+} from './embeddedSvelte';
 
 let client: LanguageClient;
 const htmlLanguageService = getLanguageService();
 
-export function activate(context: ExtensionContext) {
+export async function activate(context: ExtensionContext) {
     // The server is implemented in node
     const serverModule = context.asAbsolutePath(path.join('server', 'out', 'server.js'));
 
@@ -26,6 +30,9 @@ export function activate(context: ExtensionContext) {
             transport: TransportKind.ipc,
         }
     };
+
+    // Load Grammar definitions
+    const grammar = await loadTextmateGrammar();
 
     // Maintain map of markdown-sanitised files
     const vdocMapMarkdown = new Map<string, string>();
@@ -58,12 +65,12 @@ export function activate(context: ExtensionContext) {
                 let service = "md"; // Requests are forwarded to markdown handler by default
 
                 // Check if we currently are in a 'Svelte-y' region
-                if (isInsideSvelteRegion(htmlLanguageService, document.getText(), document.offsetAt(position))) {
+                if (isInsideSvelteRegion(document, grammar, document.offsetAt(position))) {
 
-                    vdocMapSvelte.set(originalUri, getCSSVirtualContent(htmlLanguageService, document.getText()));
+                    vdocMapSvelte.set(originalUri, getVirtualSvelteDocument(document, grammar));
                     service = "svelte";
                 } else {
-                    vdocMapMarkdown.set(originalUri, getVirtualMarkdownDocument(document));   // TODO remove SVELTE syntax
+                    vdocMapMarkdown.set(originalUri, getVirtualMarkdownDocument(document, grammar));
                 }
 
                 // TODO what do we do with `next`?
@@ -77,8 +84,6 @@ export function activate(context: ExtensionContext) {
                 const vdocUriString = `embedded-${service}://${service}/${encodeURIComponent(originalUri)}.${service}`;
                 const vdocUri = Uri.parse(vdocUriString);
 
-
-                console.log(vdocUriString);
                 const list = await commands.executeCommand<CompletionList>(
                     'vscode.executeCompletionItemProvider',
                     vdocUri,
