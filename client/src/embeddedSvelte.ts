@@ -13,12 +13,12 @@
 import * as fs from "fs";
 import * as path from "path";
 
-import { IGrammar, INITIAL, parseRawGrammar, Registry } from "vscode-textmate";
+import { TextDocument } from "vscode";
+import { IGrammar, INITIAL, IToken, ITokenizeLineResult, parseRawGrammar, Registry } from "vscode-textmate";
 import { loadWASM, createOnigScanner, createOnigString } from "vscode-oniguruma";
 
 /*--------------------------------- State ------------------------------------*/
 
-// TODO how to bundle this?
 const wasmBin = fs.readFileSync(path.join(__dirname, '../node_modules/vscode-oniguruma/release/onig.wasm')).buffer;
 const vscodeOnigurumaLib = loadWASM(wasmBin).then(() => {
     return {
@@ -32,7 +32,7 @@ const registry = new Registry({
     onigLib: vscodeOnigurumaLib,
     loadGrammar: async (scopeName) => {
         if (scopeName === 'text.html.markdown.svelte') {
-            const p = path.join(__dirname, '../../syntaxes/MDsveX.tmLanguage.json')
+            const p = path.join(__dirname, '../context.tmLanguage.json')
             return readFile(p).then(data => parseRawGrammar(data.toString(), p));
         }
         console.log(`Unknown scope name: ${scopeName}`);
@@ -55,42 +55,74 @@ export async function loadTextmateGrammar() {
 }
 
 export function isInsideSvelteRegion(
-    document: any,
+    document: TextDocument,
     grammar: IGrammar,
     offset: number
 ) {
-    // return true;
-    return false;
+    const pos = document.positionAt(offset);
+
+    // We still have to tokenize from the start, but can exit early
+    let ruleStack = INITIAL;
+    let targetTokens: ITokenizeLineResult;
+    for (let i = 0; i < document.lineCount; i++) {
+        const line = document.lineAt(i).text;
+        const lineTokens = grammar.tokenizeLine(line, ruleStack);
+
+        if (i === pos.line) {
+            targetTokens = lineTokens;
+            break;
+        }
+
+        ruleStack = lineTokens.ruleStack;
+    }
+
+    // Find target token and determine which scope we're in
+    let targetToken: IToken;
+    for (let i = 0; i < targetTokens.tokens.length; i++) {
+        const token = targetTokens.tokens[i];
+        if (pos.character >= token.startIndex && pos.character <= token.endIndex) {
+            targetToken = token;
+            break;
+        }
+    }
+
+    return targetToken.scopes.includes("source.svelte");
 }
 
-export function getVirtualSvelteDocument(document: any, grammar: IGrammar) {
-    console.log(grammar);
+export function getVirtualSvelteDocument(document: TextDocument, grammar: IGrammar) {
+    // Replace Svelte regions with Whitespace
+    let newDoc = "";
 
-    // Replace Markdown regions with Whitespace
+    let ruleStack = INITIAL;
+    for (let i = 0; i < document.lineCount; i++) {
+        const line = document.lineAt(i).text;
+        const lineTokens = grammar.tokenizeLine(line, ruleStack);
+        // console.log(`\nTokenizing line: ${line}`);
+        for (let j = 0; j < lineTokens.tokens.length; j++) {
+            const token = lineTokens.tokens[j];
+            if (token.scopes.includes("source.svelte")) {
+                newDoc = newDoc.concat(" ".repeat(token.endIndex - token.startIndex));
+            } else {
+                newDoc = newDoc.concat(line.substring(token.startIndex, token.endIndex));
+            }
+
+            // console.log(` - token from ${token.startIndex} to ${token.endIndex} ` +
+            //     `(${line.substring(token.startIndex, token.endIndex)}) ` +
+            //     `with scopes ${token.scopes.join(', ')}`
+            // );
+        }
+        // Add line endings (only to virtual doc, endings shouldn't matter)
+        newDoc = newDoc.concat('\n');
+
+        ruleStack = lineTokens.ruleStack;
+    }
+
+    // console.log(newDoc);
 
     return document.getText();
 }
 
-export function getVirtualMarkdownDocument(document: any, grammar: IGrammar) {
-    console.log(grammar);
-
-    const text = document.getText();
-
-    // Replace Svelte regions with Whitespace
-    let ruleStack = INITIAL;
-    for (let i = 0; i < text.length; i++) {
-        const line = text[i];
-        const lineTokens = grammar.tokenizeLine(line, ruleStack);
-        console.log(`\nTokenizing line: ${line}`);
-        for (let j = 0; j < lineTokens.tokens.length; j++) {
-            const token = lineTokens.tokens[j];
-            console.log(` - token from ${token.startIndex} to ${token.endIndex} ` +
-                `(${line.substring(token.startIndex, token.endIndex)}) ` +
-                `with scopes ${token.scopes.join(', ')}`
-            );
-        }
-        ruleStack = lineTokens.ruleStack;
-    }
+export function getVirtualMarkdownDocument(document: TextDocument, grammar: IGrammar) {
 
     return document.getText();
 }

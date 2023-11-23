@@ -41,7 +41,7 @@ export async function activate(context: ExtensionContext) {
             const originalUri = uri.path.slice(1).slice(0, -3);
             const decodedUri = decodeURIComponent(originalUri);
 
-            console.log(vdocMapMarkdown.get(decodedUri));
+            // console.log(vdocMapMarkdown.get(decodedUri));
 
             return vdocMapMarkdown.get(decodedUri);
         }
@@ -66,12 +66,13 @@ export async function activate(context: ExtensionContext) {
 
                 // Check if we currently are in a 'Svelte-y' region
                 if (isInsideSvelteRegion(document, grammar, document.offsetAt(position))) {
-
                     vdocMapSvelte.set(originalUri, getVirtualSvelteDocument(document, grammar));
                     service = "svelte";
                 } else {
                     vdocMapMarkdown.set(originalUri, getVirtualMarkdownDocument(document, grammar));
                 }
+
+                console.log(service);
 
                 // TODO what do we do with `next`?
 
