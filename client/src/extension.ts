@@ -27,20 +27,29 @@ let client: LanguageClient;
 
 /*------------------------------- Functions ----------------------------------*/
 
-function prepareVirtualDocuments(document: TextDocument, grammar: IGrammar, position: Position) {
-    const originalUri = document.uri.toString(true);
-    let service = "md"; // Requests are forwarded to markdown handler by default
+function prepareVirtualDocuments(document: TextDocument, grammar: IGrammar, position: Position, map: Map<string, string>) {
+    let service: string;
+    let doc: string;
 
     // Check if we currently are in a 'Svelte-y' region
     if (isInsideSvelteRegion(document, grammar, document.offsetAt(position))) {
-        // vdocMapSvelte.set(originalUri, getVirtualSvelteDocument(document, grammar));
         service = "svelte";
+        doc = getVirtualSvelteDocument(document, grammar);
     } else {
-        // vdocMapMarkdown.set(originalUri, getVirtualMarkdownDocument(document, grammar));
+        service = "md";
+        doc = getVirtualMarkdownDocument(document, grammar);
     }
 
+    const originalUri = document.uri.toString(true);
     const vdocUriString = `embedded-${service}://${service}/${encodeURIComponent(originalUri)}.${service}`;
     const vdocUri = Uri.parse(vdocUriString);
+
+    // Write document to virtual map and return its URI
+    map.set(vdocUri.path, doc);
+
+    console.log(doc);
+
+    return vdocUri;
 }
 
 /*-------------------------------- Exports -----------------------------------*/
@@ -62,25 +71,20 @@ export async function activate(context: ExtensionContext) {
     // Load Grammar definitions
     const grammar = await loadTextmateGrammar();
 
-    // Maintain map of markdown-sanitised files
-    const vdocMapMarkdown = new Map<string, string>();
+    // Maintain map of sanitised files
+    const vdocMap = new Map<string, string>();
+
     workspace.registerTextDocumentContentProvider('embedded-md', {
         provideTextDocumentContent: uri => {
-            const originalUri = uri.path.slice(1).slice(0, -3);
-            const decodedUri = decodeURIComponent(originalUri);
-            return vdocMapMarkdown.get(decodedUri);
+            const decodedUri = decodeURIComponent(uri.path);
+            return vdocMap.get(decodedUri);
         }
     });
 
-    // Maintain separate map of svelte-sanitised files
-    const vdocMapSvelte = new Map<string, string>();
     workspace.registerTextDocumentContentProvider('embedded-svelte', {
         provideTextDocumentContent: uri => {
-            const originalUri = uri.path.slice(1).slice(0, -7);
-            const decodedUri = decodeURIComponent(originalUri);
-            console.log(vdocMapSvelte.get(decodedUri));
-
-            return vdocMapSvelte.get(decodedUri);
+            const decodedUri = decodeURIComponent(uri.path);
+            return vdocMap.get(decodedUri);
         }
     });
 
@@ -88,41 +92,24 @@ export async function activate(context: ExtensionContext) {
         documentSelector: [{ scheme: 'file', language: 'MDsveX' }],
         middleware: {
             provideHover: async (document, position, token, next) => {
-
+                const vdocUri = prepareVirtualDocuments(document, grammar, position, vdocMap);
 
                 return await commands.executeCommand<Hover>(
-                    'vscode.execute',
+                    'vscode.executeHoverProvider',
                     vdocUri,
                     position,
                 );
             },
 
             provideCompletionItem: async (document, position, context, token, next) => {
-                const originalUri = document.uri.toString(true);
-                let service = "md"; // Requests are forwarded to markdown handler by default
+                const vdocUri = prepareVirtualDocuments(document, grammar, position, vdocMap);
 
-                // Check if we currently are in a 'Svelte-y' region
-                if (isInsideSvelteRegion(document, grammar, document.offsetAt(position))) {
-                    vdocMapSvelte.set(originalUri, getVirtualSvelteDocument(document, grammar));
-                    service = "svelte";
-                } else {
-                    vdocMapMarkdown.set(originalUri, getVirtualMarkdownDocument(document, grammar));
-                }
-
-                const vdocUriString = `embedded-${service}://${service}/${encodeURIComponent(originalUri)}.${service}`;
-                const vdocUri = Uri.parse(vdocUriString);
-
-                const list = await commands.executeCommand<CompletionList>(
+                return await commands.executeCommand<CompletionList>(
                     'vscode.executeCompletionItemProvider',
                     vdocUri,
                     position,
                     context.triggerCharacter
                 );
-
-                console.log(vdocUri);
-                console.log(list);
-
-                return list;
             }
         }
     };
