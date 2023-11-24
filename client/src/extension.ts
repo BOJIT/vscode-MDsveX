@@ -1,21 +1,49 @@
-/* --------------------------------------------------------------------------------------------
- * Copyright (c) Microsoft Corporation. All rights reserved.
- * Licensed under the MIT License. See License.txt in the project root for license information.
- * ------------------------------------------------------------------------------------------ */
+/**
+ * @file extension.ts
+ * @author James Bennion-Pedley
+ * @brief Main entrypoint for extension
+ * @date 24/11/2023
+ *
+ * @copyright Copyright (c) 2023
+ *
+ */
+
+/*-------------------------------- Imports -----------------------------------*/
 
 import * as path from 'path';
-import { commands, CompletionList, ExtensionContext, Uri, workspace } from 'vscode';
-import { getLanguageService } from 'vscode-html-languageservice';
-import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind } from 'vscode-languageclient';
+import { commands, CompletionList, ExtensionContext, Hover, Position, TextDocument, Uri, workspace } from 'vscode';
+import { LanguageClient, LanguageClientOptions, ServerOptions, Trace, TransportKind } from 'vscode-languageclient';
 import {
     isInsideSvelteRegion,
     getVirtualMarkdownDocument,
     getVirtualSvelteDocument,
     loadTextmateGrammar,
 } from './embeddedSvelte';
+import { IGrammar } from 'vscode-textmate';
+
+/*--------------------------------- State ------------------------------------*/
 
 let client: LanguageClient;
-const htmlLanguageService = getLanguageService();
+
+/*------------------------------- Functions ----------------------------------*/
+
+function prepareVirtualDocuments(document: TextDocument, grammar: IGrammar, position: Position) {
+    const originalUri = document.uri.toString(true);
+    let service = "md"; // Requests are forwarded to markdown handler by default
+
+    // Check if we currently are in a 'Svelte-y' region
+    if (isInsideSvelteRegion(document, grammar, document.offsetAt(position))) {
+        // vdocMapSvelte.set(originalUri, getVirtualSvelteDocument(document, grammar));
+        service = "svelte";
+    } else {
+        // vdocMapMarkdown.set(originalUri, getVirtualMarkdownDocument(document, grammar));
+    }
+
+    const vdocUriString = `embedded-${service}://${service}/${encodeURIComponent(originalUri)}.${service}`;
+    const vdocUri = Uri.parse(vdocUriString);
+}
+
+/*-------------------------------- Exports -----------------------------------*/
 
 export async function activate(context: ExtensionContext) {
     // The server is implemented in node
@@ -40,9 +68,6 @@ export async function activate(context: ExtensionContext) {
         provideTextDocumentContent: uri => {
             const originalUri = uri.path.slice(1).slice(0, -3);
             const decodedUri = decodeURIComponent(originalUri);
-
-            // console.log(vdocMapMarkdown.get(decodedUri));
-
             return vdocMapMarkdown.get(decodedUri);
         }
     });
@@ -53,6 +78,8 @@ export async function activate(context: ExtensionContext) {
         provideTextDocumentContent: uri => {
             const originalUri = uri.path.slice(1).slice(0, -7);
             const decodedUri = decodeURIComponent(originalUri);
+            console.log(vdocMapSvelte.get(decodedUri));
+
             return vdocMapSvelte.get(decodedUri);
         }
     });
@@ -60,6 +87,16 @@ export async function activate(context: ExtensionContext) {
     const clientOptions: LanguageClientOptions = {
         documentSelector: [{ scheme: 'file', language: 'MDsveX' }],
         middleware: {
+            provideHover: async (document, position, token, next) => {
+
+
+                return await commands.executeCommand<Hover>(
+                    'vscode.execute',
+                    vdocUri,
+                    position,
+                );
+            },
+
             provideCompletionItem: async (document, position, context, token, next) => {
                 const originalUri = document.uri.toString(true);
                 let service = "md"; // Requests are forwarded to markdown handler by default
@@ -72,16 +109,6 @@ export async function activate(context: ExtensionContext) {
                     vdocMapMarkdown.set(originalUri, getVirtualMarkdownDocument(document, grammar));
                 }
 
-                console.log(service);
-
-                // TODO what do we do with `next`?
-
-                // If not in `<style>`, do not perform request forwarding
-                // if (!isInsideStyleRegion(htmlLanguageService, document.getText(), document.offsetAt(position))) {
-                //     return await next(document, position, context, token);
-                // }
-
-                // const vdocUriString = `embedded-${service}://svelte/${encodeURIComponent(originalUri)}.${service}`;
                 const vdocUriString = `embedded-${service}://${service}/${encodeURIComponent(originalUri)}.${service}`;
                 const vdocUri = Uri.parse(vdocUriString);
 
@@ -91,6 +118,9 @@ export async function activate(context: ExtensionContext) {
                     position,
                     context.triggerCharacter
                 );
+
+                console.log(vdocUri);
+                console.log(list);
 
                 return list;
             }
@@ -106,6 +136,8 @@ export async function activate(context: ExtensionContext) {
         serverOptions,
         clientOptions
     );
+
+    client.trace = Trace.Verbose;
 
     // Start the client. This will also launch the server
     client.start();

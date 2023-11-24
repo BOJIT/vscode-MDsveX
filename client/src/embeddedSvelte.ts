@@ -90,26 +90,20 @@ export function isInsideSvelteRegion(
 }
 
 export function getVirtualSvelteDocument(document: TextDocument, grammar: IGrammar) {
-    // Replace Svelte regions with Whitespace
+    // Replace Markdown regions with Whitespace
     let newDoc = "";
 
     let ruleStack = INITIAL;
     for (let i = 0; i < document.lineCount; i++) {
         const line = document.lineAt(i).text;
         const lineTokens = grammar.tokenizeLine(line, ruleStack);
-        // console.log(`\nTokenizing line: ${line}`);
         for (let j = 0; j < lineTokens.tokens.length; j++) {
             const token = lineTokens.tokens[j];
-            if (token.scopes.includes("source.svelte")) {
+            if (!token.scopes.includes("source.svelte")) {
                 newDoc = newDoc.concat(" ".repeat(token.endIndex - token.startIndex));
             } else {
                 newDoc = newDoc.concat(line.substring(token.startIndex, token.endIndex));
             }
-
-            // console.log(` - token from ${token.startIndex} to ${token.endIndex} ` +
-            //     `(${line.substring(token.startIndex, token.endIndex)}) ` +
-            //     `with scopes ${token.scopes.join(', ')}`
-            // );
         }
         // Add line endings (only to virtual doc, endings shouldn't matter)
         newDoc = newDoc.concat('\n');
@@ -119,10 +113,32 @@ export function getVirtualSvelteDocument(document: TextDocument, grammar: IGramm
 
     // console.log(newDoc);
 
-    return document.getText();
+    return newDoc;
 }
 
 export function getVirtualMarkdownDocument(document: TextDocument, grammar: IGrammar) {
+    // Replace Svelte regions with Whitespace
+    let newDoc = "";
 
-    return document.getText();
+    let ruleStack = INITIAL;
+    for (let i = 0; i < document.lineCount; i++) {
+        const line = document.lineAt(i).text;
+        const lineTokens = grammar.tokenizeLine(line, ruleStack);
+        for (let j = 0; j < lineTokens.tokens.length; j++) {
+            const token = lineTokens.tokens[j];
+            if (token.scopes.includes("source.svelte")) {
+                newDoc = newDoc.concat(" ".repeat(token.endIndex - token.startIndex));
+            } else {
+                newDoc = newDoc.concat(line.substring(token.startIndex, token.endIndex));
+            }
+        }
+        // Add line endings (only to virtual doc, endings shouldn't matter)
+        newDoc = newDoc.concat('\n');
+
+        ruleStack = lineTokens.ruleStack;
+    }
+
+    // console.log(newDoc);
+
+    return newDoc;
 }

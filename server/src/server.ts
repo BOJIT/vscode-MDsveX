@@ -3,7 +3,7 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import { getLanguageService } from 'vscode-html-languageservice';
+// import { getLanguageService } from 'vscode-html-languageservice';
 import { createConnection, InitializeParams, ProposedFeatures, TextDocuments, TextDocumentSyncKind } from 'vscode-languageserver';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 
@@ -15,7 +15,7 @@ const connection = createConnection(ProposedFeatures.all);
 // supports full document sync only
 const documents: TextDocuments<TextDocument> = new TextDocuments(TextDocument);
 
-const htmlLanguageService = getLanguageService();
+// const htmlLanguageService = getLanguageService();
 
 connection.onInitialize((_params: InitializeParams) => {
     return {
@@ -29,20 +29,20 @@ connection.onInitialize((_params: InitializeParams) => {
     };
 });
 
-connection.onCompletion(async (textDocumentPosition, token) => {
-    // TODO add MDsveX-specific tooling here
+// connection.onCompletion(async (textDocumentPosition, token) => {
+//     // TODO add MDsveX-specific tooling here
 
-    const document = documents.get(textDocumentPosition.textDocument.uri);
-    if (!document) {
-        return null;
-    }
+//     const document = documents.get(textDocumentPosition.textDocument.uri);
+//     if (!document) {
+//         return null;
+//     }
 
-    return htmlLanguageService.doComplete(
-        document,
-        textDocumentPosition.position,
-        htmlLanguageService.parseHTMLDocument(document)
-    );
-});
+//     return htmlLanguageService.doComplete(
+//         document,
+//         textDocumentPosition.position,
+//         htmlLanguageService.parseHTMLDocument(document)
+//     );
+// });
 
 documents.listen(connection);
 connection.listen();

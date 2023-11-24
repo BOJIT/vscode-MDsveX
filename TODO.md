@@ -4,6 +4,8 @@
 
 - [x] YAML commenting doesn't work correctly!
 
+- [ ] Try forwarding without a virtual document
+
 - [ ] Request Forwarding for Intellisense!
 
 - [ ] Script tags should be treated as svelte source
