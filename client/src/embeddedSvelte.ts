@@ -99,7 +99,7 @@ export function getVirtualSvelteDocument(document: TextDocument, grammar: IGramm
         const lineTokens = grammar.tokenizeLine(line, ruleStack);
         for (let j = 0; j < lineTokens.tokens.length; j++) {
             const token = lineTokens.tokens[j];
-            if (!token.scopes.includes("source.svelte")) {
+            if (!token.scopes.some((s) => s.endsWith("source.svelte"))) {
                 newDoc = newDoc.concat(" ".repeat(token.endIndex - token.startIndex));
             } else {
                 newDoc = newDoc.concat(line.substring(token.startIndex, token.endIndex));
@@ -110,8 +110,6 @@ export function getVirtualSvelteDocument(document: TextDocument, grammar: IGramm
 
         ruleStack = lineTokens.ruleStack;
     }
-
-    // console.log(newDoc);
 
     return newDoc;
 }
@@ -126,7 +124,7 @@ export function getVirtualMarkdownDocument(document: TextDocument, grammar: IGra
         const lineTokens = grammar.tokenizeLine(line, ruleStack);
         for (let j = 0; j < lineTokens.tokens.length; j++) {
             const token = lineTokens.tokens[j];
-            if (token.scopes.includes("source.svelte")) {
+            if (token.scopes.some((s) => s.endsWith("source.svelte"))) {
                 newDoc = newDoc.concat(" ".repeat(token.endIndex - token.startIndex));
             } else {
                 newDoc = newDoc.concat(line.substring(token.startIndex, token.endIndex));
@@ -137,8 +135,6 @@ export function getVirtualMarkdownDocument(document: TextDocument, grammar: IGra
 
         ruleStack = lineTokens.ruleStack;
     }
-
-    // console.log(newDoc);
 
     return newDoc;
 }

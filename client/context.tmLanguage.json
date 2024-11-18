@@ -4,7 +4,8 @@
     "scopeName": "text.html.markdown.svelte",
     "patterns": [
         {
-            "include": "#svelte"
+            "include": "#svelte",
+            "name": "source.svelte"
         },
         {
             "include": "#markdown"
@@ -35,7 +36,7 @@
                         {
                             "begin": "<script[^>]*>",
                             "end": "<\/script>",
-                            "name": "script.source.svelte"
+                            "name": "source.svelte"
                         }
                     ]
                 },
@@ -44,7 +45,7 @@
                         {
                             "begin": "<style[^>]*>",
                             "end": "<\/style>",
-                            "name": "style.source.svelte"
+                            "name": "source.svelte"
                         }
                     ]
                 },
@@ -53,7 +54,7 @@
                         {
                             "begin": "(?!^#{1,}\\s+?)(?:[^{}]*?)(?=<)",
                             "end": "(?<=>|$)",
-                            "contentName": "tag.source.svelte"
+                            "contentName": "source.svelte"
                         }
                     ]
                 },
@@ -62,7 +63,7 @@
                         {
                             "begin": "(?!^#{1,}\\s+?)(?:.*?)(?={[#/])",
                             "end": "(?<=}|$)",
-                            "contentName": "template.source.svelte"
+                            "contentName": "source.svelte"
                         }
                     ]
                 },
@@ -71,7 +72,7 @@
                         {
                             "begin": "(?!^#{1,}\\s+?)(?:.*?)(?={[^#/])",
                             "end": "(?<=}|$)",
-                            "contentName": "expression.source.svelte"
+                            "contentName": "source.svelte"
                         }
                     ]
                 }
