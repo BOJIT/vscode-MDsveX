@@ -1,6 +1,7 @@
 {
     "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
     "name": "Markdown Svelte",
+    "scopeName": "text.html.markdown.svelte",
     "patterns": [
         {
             "include": "#svelte"
@@ -13,6 +14,12 @@
         "svelte": {
             "patterns": [
                 {
+                    "include": "#svelte-script-section"
+                },
+                {
+                    "include": "#svelte-style-section"
+                },
+                {
                     "include": "#svelte-tag"
                 },
                 {
@@ -23,12 +30,30 @@
                 }
             ],
             "repository": {
+                "svelte-script-section": {
+                    "patterns": [
+                        {
+                            "begin": "<script[^>]*>",
+                            "end": "<\/script>",
+                            "name": "script.source.svelte"
+                        }
+                    ]
+                },
+                "svelte-style-section": {
+                    "patterns": [
+                        {
+                            "begin": "<style[^>]*>",
+                            "end": "<\/style>",
+                            "name": "style.source.svelte"
+                        }
+                    ]
+                },
                 "svelte-tag": {
                     "patterns": [
                         {
-                            "begin": "(?!^#{1,}\\s+?)(?:[^{}]*?)(?=<[^(script)])",
+                            "begin": "(?!^#{1,}\\s+?)(?:[^{}]*?)(?=<)",
                             "end": "(?<=>|$)",
-                            "contentName": "source.svelte"
+                            "contentName": "tag.source.svelte"
                         }
                     ]
                 },
@@ -37,7 +62,7 @@
                         {
                             "begin": "(?!^#{1,}\\s+?)(?:.*?)(?={[#/])",
                             "end": "(?<=}|$)",
-                            "contentName": "source.svelte"
+                            "contentName": "template.source.svelte"
                         }
                     ]
                 },
@@ -46,12 +71,11 @@
                         {
                             "begin": "(?!^#{1,}\\s+?)(?:.*?)(?={[^#/])",
                             "end": "(?<=}|$)",
-                            "contentName": "source.svelte"
+                            "contentName": "expression.source.svelte"
                         }
                     ]
                 }
             }
         }
-    },
-    "scopeName": "text.html.markdown.svelte"
+    }
 }

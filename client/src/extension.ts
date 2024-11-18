@@ -47,8 +47,6 @@ function prepareVirtualDocuments(document: TextDocument, grammar: IGrammar, posi
     // Write document to virtual map and return its URI
     map.set(vdocUri.path, doc);
 
-    console.log(doc);
-
     return vdocUri;
 }
 
@@ -92,6 +90,8 @@ export async function activate(context: ExtensionContext) {
         documentSelector: [{ scheme: 'file', language: 'MDsveX' }],
         middleware: {
             provideHover: async (document, position, token, next) => {
+                // console.log("In provideHover")
+
                 const vdocUri = prepareVirtualDocuments(document, grammar, position, vdocMap);
 
                 return await commands.executeCommand<Hover>(
@@ -102,15 +102,23 @@ export async function activate(context: ExtensionContext) {
             },
 
             provideCompletionItem: async (document, position, context, token, next) => {
+                // console.log("In CompletionItem")
                 const vdocUri = prepareVirtualDocuments(document, grammar, position, vdocMap);
 
-                return await commands.executeCommand<CompletionList>(
+                // // If not in `<style>`, do not perform request forwarding
+                // if (!isInsideStyleRegion(htmlLanguageService, document.getText(), document.offsetAt(position))) {
+                //     return await next(document, position, context, token);
+                // }
+
+                let thing = await commands.executeCommand<CompletionList>(
                     'vscode.executeCompletionItemProvider',
                     vdocUri,
                     position,
                     context.triggerCharacter
                 );
-            }
+                // console.log(thing);
+                return thing;
+            },
         }
     };
 

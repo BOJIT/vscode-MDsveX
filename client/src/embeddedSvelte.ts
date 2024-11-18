@@ -86,7 +86,7 @@ export function isInsideSvelteRegion(
         }
     }
 
-    return targetToken.scopes.includes("source.svelte");
+    return targetToken.scopes.some((s) => s.endsWith("source.svelte"));
 }
 
 export function getVirtualSvelteDocument(document: TextDocument, grammar: IGrammar) {
