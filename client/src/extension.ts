@@ -41,7 +41,7 @@ function serviceUri(original: string, type: string) {
     return vscode.Uri.parse(`embedded-${type}://${type}/${encodeURIComponent(original)}.${type}`);
 }
 
-function updateVDoc(src: vscode.TextDocument, grammar: IGrammar, fs: VirtualFileSystem): void {
+async function updateVDoc(src: vscode.TextDocument, grammar: IGrammar, fs: VirtualFileSystem): Promise<void> {
     const originalUri = src.uri.toString(true);
 
     // Update Svelte VDoc
@@ -55,8 +55,15 @@ function updateVDoc(src: vscode.TextDocument, grammar: IGrammar, fs: VirtualFile
     fs.updateFile(mdUri, mdDoc);
 
     // Debug
-    vscode.window.showTextDocument(svelteUri, { preview: false, viewColumn: -2, preserveFocus: true });
-    // vscode.window.showTextDocument(mdUri, { preview: false, viewColumn: -2, preserveFocus: true });
+    await vscode.workspace.openTextDocument(svelteUri);
+    // await vscode.window.showTextDocument(svelteUri, { preview: false, viewColumn: -2, preserveFocus: true });
+
+    // Note that these should be closed at some point! extension is responsible
+
+    // HACK: https://github.com/microsoft/vscode/issues/159911
+    setTimeout(() => {
+        client.diagnostics.set(src.uri, vscode.languages.getDiagnostics(svelteUri));
+    }, 500);
 }
 
 function removeVDoc(src: vscode.TextDocument, fs: VirtualFileSystem): void {
@@ -115,6 +122,9 @@ export async function activate(context: vscode.ExtensionContext) {
                 removeVDoc(doc, vfs);
             },
 
+            handleDiagnostics(uri, diagnostics, next) {
+                console.log("Got Diagnostics");
+            },
 
             // provideHover: async (document, position, token, next) => {
             //     // console.log("In provideHover")
@@ -149,7 +159,7 @@ export async function activate(context: vscode.ExtensionContext) {
                     position,
                     context.triggerCharacter
                 );
-                console.log(vdocUri);
+                // console.log(vdocUri);
                 return response;
             },
         }
