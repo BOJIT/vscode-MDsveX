@@ -129,18 +129,28 @@ export async function activate(context: vscode.ExtensionContext) {
             //     );
             // },
 
+            provideDefinition: async (document, position, token, next) => {
+                const vdocUri = getSectionVDoc(document, grammar, position);
+                let response = await vscode.commands.executeCommand<vscode.Location[]>(
+                    'vscode.executeDefinitionProvider',
+                    vdocUri,
+                    position,
+                );
+                // console.log(response);
+                return response;
+            },
+
             provideCompletionItem: async (document, position, context, token, next) => {
-                // console.log("In CompletionItem")
                 const vdocUri = getSectionVDoc(document, grammar, position);
 
-                let thing = await vscode.commands.executeCommand<vscode.CompletionList>(
+                let response = await vscode.commands.executeCommand<vscode.CompletionList>(
                     'vscode.executeCompletionItemProvider',
                     vdocUri,
                     position,
                     context.triggerCharacter
                 );
-                // console.log(thing);
-                return thing;
+                console.log(vdocUri);
+                return response;
             },
         }
     };

@@ -21,9 +21,9 @@ connection.onInitialize((_params: InitializeParams) => {
     return {
         capabilities: {
             textDocumentSync: TextDocumentSyncKind.Full,
-            // Tell the client that the server supports code completion
+            definitionProvider: true,
             completionProvider: {
-                resolveProvider: false
+                resolveProvider: true
             }
         }
     };

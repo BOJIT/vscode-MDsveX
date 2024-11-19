@@ -33,7 +33,7 @@ class VirtualFileSystem implements TextDocumentContentProvider {
 
     removeFile(uri: Uri) {
         this.#map.delete(uri.path);
-        // this.onDidChangeEmitter.fire(uri);
+        this.onDidChangeEmitter.fire(uri);
     }
 }
 
