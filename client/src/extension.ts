@@ -29,6 +29,8 @@ import {
     loadTextmateGrammar,
 } from './embeddedLanguage';
 
+import VirtualFileSystem from './virtualFileSystem';
+
 /*--------------------------------- State ------------------------------------*/
 
 let client: LanguageClient;
@@ -39,29 +41,33 @@ function serviceUri(original: string, type: string) {
     return vscode.Uri.parse(`embedded-${type}://${type}/${encodeURIComponent(original)}.${type}`);
 }
 
-function updateVDoc(src: vscode.TextDocument, grammar: IGrammar, map: Map<string, string>): void {
+function updateVDoc(src: vscode.TextDocument, grammar: IGrammar, fs: VirtualFileSystem): void {
     const originalUri = src.uri.toString(true);
 
     // Update Svelte VDoc
     const svelteUri = serviceUri(originalUri, "svelte");
     const svelteDoc = getVirtualSvelteDocument(src, grammar);
-    map.set(svelteUri.path, svelteDoc);
+    fs.updateFile(svelteUri, svelteDoc);
 
     // Create MD VDoc
     const mdUri = serviceUri(originalUri, "md");
     const mdDoc = getVirtualMarkdownDocument(src, grammar);
-    map.set(mdUri.path, mdDoc);
+    fs.updateFile(mdUri, mdDoc);
+
+    // Debug
+    vscode.window.showTextDocument(svelteUri, { preview: false, viewColumn: -2, preserveFocus: true });
+    // vscode.window.showTextDocument(mdUri, { preview: false, viewColumn: -2, preserveFocus: true });
 }
 
-function removeVDoc(src: vscode.TextDocument, map: Map<string, string>): void {
+function removeVDoc(src: vscode.TextDocument, fs: VirtualFileSystem): void {
     // Construct VDoc URIs
     const originalUri = src.uri.toString(true);
     const svelteUri = serviceUri(originalUri, "svelte");
     const mdUri = serviceUri(originalUri, "md");
 
     // Remove entries if they exist
-    map.delete(svelteUri.path);
-    map.delete(mdUri.path);
+    fs.removeFile(svelteUri);
+    fs.removeFile(mdUri);
 }
 
 function getSectionVDoc(document: vscode.TextDocument, grammar: IGrammar, position: vscode.Position) {
@@ -91,39 +97,22 @@ export async function activate(context: vscode.ExtensionContext) {
     // Load Grammar definitions
     const grammar = await loadTextmateGrammar();
 
-    // Maintain map of sanitised files
-    const vdocMap = new Map<string, string>();
-
-    const markdownProvider = new class implements vscode.TextDocumentContentProvider {
-        onDidChangeEmitter = new vscode.EventEmitter<vscode.Uri>();
-        onDidChange = this.onDidChangeEmitter.event;
-        provideTextDocumentContent(uri: vscode.Uri): string {
-            return vdocMap.get(decodeURIComponent(uri.path));
-        }
-    }
-    const svelteProvider = new class implements vscode.TextDocumentContentProvider {
-        onDidChangeEmitter = new vscode.EventEmitter<vscode.Uri>();
-        onDidChange = this.onDidChangeEmitter.event;
-        provideTextDocumentContent(uri: vscode.Uri): string {
-            return vdocMap.get(decodeURIComponent(uri.path));
-        }
-    }
-
-    // Do these need to be separate providers?
-    context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider('embedded-md', markdownProvider));
-    context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider('embedded-svelte', svelteProvider));
+    // Maintain map of sanitised files in memory
+    const vfs = new VirtualFileSystem();
+    context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider('embedded-md', vfs));
+    context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider('embedded-svelte', vfs));
 
     const clientOptions: LanguageClientOptions = {
         documentSelector: [{ scheme: 'file', language: 'MDsveX' }],
         middleware: {
             didOpen: (doc: vscode.TextDocument, next: (doc: vscode.TextDocument) => void): void => {
-                updateVDoc(doc, grammar, vdocMap);
+                updateVDoc(doc, grammar, vfs);
             },
             didChange: (data: vscode.TextDocumentChangeEvent, next: (data: vscode.TextDocumentChangeEvent) => void): void => {
-                updateVDoc(data.document, grammar, vdocMap);
+                updateVDoc(data.document, grammar, vfs);
             },
             didClose: (doc: vscode.TextDocument, next: (doc: vscode.TextDocument) => void): void => {
-                removeVDoc(doc, vdocMap);
+                removeVDoc(doc, vfs);
             },
 
 
@@ -143,7 +132,6 @@ export async function activate(context: vscode.ExtensionContext) {
             provideCompletionItem: async (document, position, context, token, next) => {
                 // console.log("In CompletionItem")
                 const vdocUri = getSectionVDoc(document, grammar, position);
-                await vscode.window.showTextDocument(vdocUri, { preview: false, viewColumn: -2, preserveFocus: true });
 
                 let thing = await vscode.commands.executeCommand<vscode.CompletionList>(
                     'vscode.executeCompletionItemProvider',
