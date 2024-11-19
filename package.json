@@ -49,11 +49,12 @@
                 "scopeName": "text.html.mdsvex",
                 "path": "./syntaxes/MDsveX.tmLanguage.json",
                 "embeddedLanguages": {
+                    "embedded.svelte-style-section": "css",
+                    "embedded.svelte-js-section": "javascript",
+                    "embedded.svelte-section": "svelte",
+                    "embedded.markdown-front-matter": "yaml",
                     "source.svelte": "svelte",
-                    "text.html.markdown": "markdown",
-                    "source.js": "javascript",
-                    "meta.embedded.block.frontmatter": "yaml",
-                    "meta.tag.svelte": "svelte"
+                    "text.html.markdown": "markdown"
                 }
             }
         ]
