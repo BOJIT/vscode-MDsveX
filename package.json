@@ -54,6 +54,8 @@
                     "embedded.svelte-section": "svelte",
                     "embedded.markdown-front-matter": "yaml",
                     "source.svelte": "svelte",
+                    "source.js": "javascript",
+                    "source.css": "css",
                     "text.html.markdown": "markdown"
                 }
             }

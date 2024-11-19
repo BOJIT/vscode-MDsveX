@@ -13,12 +13,6 @@
             "include": "#markdown-inline-code"
         },
         {
-            "include": "#svelte-script-section"
-        },
-        {
-            "include": "#svelte-style-section"
-        },
-        {
             "include": "#svelte-tag"
         },
         {
@@ -33,52 +27,17 @@
         }
     ],
     "repository": {
-        "svelte-script-section": {
-            "patterns": [
-                {
-                    "name": "embedded.svelte-section",
-                    "contentName": "embedded.svelte-js-section",
-                    "begin": "<script[^>]*>",
-                    "end": "<\/script>",
-                    "endCaptures": {
-                        "0": {
-                            "name": "embedded.svelte-section"
-                        }
-                    },
-                    "patterns": [
-                        {
-                            "include": "source.js"
-                        }
-                    ]
-                }
-            ]
-        },
-        "svelte-style-section": {
-            "patterns": [
-                {
-                    "begin": "<style[^>]*>",
-                    "end": "<\/style>",
-                    "name": "embedded.svelte-section",
-                    "contentName": "embedded.svelte-style-section",
-                    "endCaptures": {
-                        "0": {
-                            "name": "embedded.svelte-section"
-                        }
-                    },
-                    "patterns": [
-                        {
-                            "include": "source.css"
-                        }
-                    ]
-                }
-            ]
-        },
         "svelte-tag": {
             "patterns": [
                 {
-                    "begin": "<(?!\\!)",
-                    "end": ">",
-                    "name": "embedded.svelte-tag"
+                    "begin": "(?!^\\s*#{1,}\\s+?)(?:[^{}]*?)(?=<[^(script)])",
+                    "end": "(?<=>|$)",
+                    "contentName": "source.svelte",
+                    "patterns": [
+                        {
+                            "include": "source.svelte"
+                        }
+                    ]
                 }
             ]
         },
@@ -87,7 +46,12 @@
                 {
                     "begin": "(?!^#{1,}\\s+?)(?:.*?)(?={[#/])",
                     "end": "(?<=}|$)",
-                    "contentName": "embedded.svelte-template"
+                    "contentName": "embedded.svelte-template",
+                    "patterns": [
+                        {
+                            "include": "source.svelte"
+                        }
+                    ]
                 }
             ]
         },
