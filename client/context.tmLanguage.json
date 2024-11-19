@@ -52,9 +52,9 @@
                 "svelte-tag": {
                     "patterns": [
                         {
-                            "begin": "(?!^#{1,}\\s+?)(?:[^{}]*?)(?=<)",
-                            "end": "(?<=>|$)",
-                            "contentName": "source.svelte"
+                            "begin": "(<\\?)\\s*([-_a-zA-Z0-9]+)",
+                            "end": "(\\?>)",
+                            "name": "source.svelte"
                         }
                     ]
                 },

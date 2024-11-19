@@ -1,17 +1,14 @@
 # vscode-MDsveX
 
-Heavily documented sample code for https://code.visualstudio.com/api/language-extensions/embedded-languages#request-forwarding
+MDsveX (Svelte in Markdown) Syntax Highlighting based on [Request Forwarding](https://code.visualstudio.com/api/language-extensions/embedded-languages#request-forwarding)
 
 ## Functionality
 
-This extension contributes a new language, `html1`. The new language is for illustration purpose and has basic syntax highlighting.
+This extension does not provide Svelte or Markdown Syntax highlighting directly. Instead, it creates two "virtual" documents that each contain valid Markdown/Svelte Syntax.
 
-This Language Server works for `html1` file. HTML1 is like HTML file but has file extension `.html1`. You can create a `test.html1` file to play with below functionalities:
+These documents then have their language features forwarded to the existing language servers.
 
-- Completions for HTML
-- Completions for CSS in `<style>` tag
-
-## Running the Sample
+## Developing the Extension
 
 - Run `npm install` in this folder. This installs all necessary npm modules in both the client and server folder
 - Open VS Code on this folder.

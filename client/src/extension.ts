@@ -11,15 +11,23 @@
 /*-------------------------------- Imports -----------------------------------*/
 
 import * as path from 'path';
-import { commands, CompletionList, ExtensionContext, Hover, Position, TextDocument, Uri, workspace } from 'vscode';
-import { LanguageClient, LanguageClientOptions, ServerOptions, Trace, TransportKind } from 'vscode-languageclient';
+
+import * as vscode from 'vscode';
+import {
+    LanguageClient,
+    LanguageClientOptions,
+    ServerOptions,
+    Trace,
+    TransportKind
+} from 'vscode-languageclient';
+import { IGrammar } from 'vscode-textmate';
+
 import {
     isInsideSvelteRegion,
     getVirtualMarkdownDocument,
     getVirtualSvelteDocument,
     loadTextmateGrammar,
-} from './embeddedSvelte';
-import { IGrammar } from 'vscode-textmate';
+} from './embeddedLanguage';
 
 /*--------------------------------- State ------------------------------------*/
 
@@ -27,32 +35,46 @@ let client: LanguageClient;
 
 /*------------------------------- Functions ----------------------------------*/
 
-function prepareVirtualDocuments(document: TextDocument, grammar: IGrammar, position: Position, map: Map<string, string>) {
-    let service: string;
-    let doc: string;
+function serviceUri(original: string, type: string) {
+    return vscode.Uri.parse(`embedded-${type}://${type}/${encodeURIComponent(original)}.${type}`);
+}
 
+function updateVDoc(src: vscode.TextDocument, grammar: IGrammar, map: Map<string, string>): void {
+    const originalUri = src.uri.toString(true);
+
+    // Update Svelte VDoc
+    const svelteUri = serviceUri(originalUri, "svelte");
+    const svelteDoc = getVirtualSvelteDocument(src, grammar);
+    map.set(svelteUri.path, svelteDoc);
+
+    // Create MD VDoc
+    const mdUri = serviceUri(originalUri, "md");
+    const mdDoc = getVirtualMarkdownDocument(src, grammar);
+    map.set(mdUri.path, mdDoc);
+}
+
+function removeVDoc(src: vscode.TextDocument, map: Map<string, string>): void {
+    // Construct VDoc URIs
+    const originalUri = src.uri.toString(true);
+    const svelteUri = serviceUri(originalUri, "svelte");
+    const mdUri = serviceUri(originalUri, "md");
+
+    // Remove entries if they exist
+    map.delete(svelteUri.path);
+    map.delete(mdUri.path);
+}
+
+function getSectionVDoc(document: vscode.TextDocument, grammar: IGrammar, position: vscode.Position) {
     // Check if we currently are in a 'Svelte-y' region
-    if (isInsideSvelteRegion(document, grammar, document.offsetAt(position))) {
-        service = "svelte";
-        doc = getVirtualSvelteDocument(document, grammar);
-    } else {
-        service = "md";
-        doc = getVirtualMarkdownDocument(document, grammar);
-    }
+    const service = isInsideSvelteRegion(document, grammar, document.offsetAt(position)) ? "svelte" : "md";
 
-    const originalUri = document.uri.toString(true);
-    const vdocUriString = `embedded-${service}://${service}/${encodeURIComponent(originalUri)}.${service}`;
-    const vdocUri = Uri.parse(vdocUriString);
-
-    // Write document to virtual map and return its URI
-    map.set(vdocUri.path, doc);
-
-    return vdocUri;
+    // Return URI that points to map object
+    return serviceUri(document.uri.toString(true), service);
 }
 
 /*-------------------------------- Exports -----------------------------------*/
 
-export async function activate(context: ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext) {
     // The server is implemented in node
     const serverModule = context.asAbsolutePath(path.join('server', 'out', 'server.js'));
 
@@ -72,45 +94,58 @@ export async function activate(context: ExtensionContext) {
     // Maintain map of sanitised files
     const vdocMap = new Map<string, string>();
 
-    workspace.registerTextDocumentContentProvider('embedded-md', {
-        provideTextDocumentContent: uri => {
-            const decodedUri = decodeURIComponent(uri.path);
-            return vdocMap.get(decodedUri);
+    const markdownProvider = new class implements vscode.TextDocumentContentProvider {
+        onDidChangeEmitter = new vscode.EventEmitter<vscode.Uri>();
+        onDidChange = this.onDidChangeEmitter.event;
+        provideTextDocumentContent(uri: vscode.Uri): string {
+            return vdocMap.get(decodeURIComponent(uri.path));
         }
-    });
+    }
+    const svelteProvider = new class implements vscode.TextDocumentContentProvider {
+        onDidChangeEmitter = new vscode.EventEmitter<vscode.Uri>();
+        onDidChange = this.onDidChangeEmitter.event;
+        provideTextDocumentContent(uri: vscode.Uri): string {
+            return vdocMap.get(decodeURIComponent(uri.path));
+        }
+    }
 
-    workspace.registerTextDocumentContentProvider('embedded-svelte', {
-        provideTextDocumentContent: uri => {
-            const decodedUri = decodeURIComponent(uri.path);
-            return vdocMap.get(decodedUri);
-        }
-    });
+    // Do these need to be separate providers?
+    context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider('embedded-md', markdownProvider));
+    context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider('embedded-svelte', svelteProvider));
 
     const clientOptions: LanguageClientOptions = {
         documentSelector: [{ scheme: 'file', language: 'MDsveX' }],
         middleware: {
-            provideHover: async (document, position, token, next) => {
-                // console.log("In provideHover")
-
-                const vdocUri = prepareVirtualDocuments(document, grammar, position, vdocMap);
-
-                return await commands.executeCommand<Hover>(
-                    'vscode.executeHoverProvider',
-                    vdocUri,
-                    position,
-                );
+            didOpen: (doc: vscode.TextDocument, next: (doc: vscode.TextDocument) => void): void => {
+                updateVDoc(doc, grammar, vdocMap);
             },
+            didChange: (data: vscode.TextDocumentChangeEvent, next: (data: vscode.TextDocumentChangeEvent) => void): void => {
+                updateVDoc(data.document, grammar, vdocMap);
+            },
+            didClose: (doc: vscode.TextDocument, next: (doc: vscode.TextDocument) => void): void => {
+                removeVDoc(doc, vdocMap);
+            },
+
+
+            // provideHover: async (document, position, token, next) => {
+            //     // console.log("In provideHover")
+
+            //     const vdocUri = prepareVirtualDocuments(document, grammar, position, vdocMap);
+            //     await window.showTextDocument(vdocUri, { preview: false });
+
+            //     return await commands.executeCommand<Hover>(
+            //         'vscode.executeHoverProvider',
+            //         vdocUri,
+            //         position,
+            //     );
+            // },
 
             provideCompletionItem: async (document, position, context, token, next) => {
                 // console.log("In CompletionItem")
-                const vdocUri = prepareVirtualDocuments(document, grammar, position, vdocMap);
+                const vdocUri = getSectionVDoc(document, grammar, position);
+                await vscode.window.showTextDocument(vdocUri, { preview: false, viewColumn: -2, preserveFocus: true });
 
-                // // If not in `<style>`, do not perform request forwarding
-                // if (!isInsideStyleRegion(htmlLanguageService, document.getText(), document.offsetAt(position))) {
-                //     return await next(document, position, context, token);
-                // }
-
-                let thing = await commands.executeCommand<CompletionList>(
+                let thing = await vscode.commands.executeCommand<vscode.CompletionList>(
                     'vscode.executeCompletionItemProvider',
                     vdocUri,
                     position,
