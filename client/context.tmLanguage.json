@@ -50,7 +50,7 @@
         "svelte-tag": {
             "patterns": [
                 {
-                    "begin": "<",
+                    "begin": "<(?!\\!)",
                     "end": ">",
                     "name": "source.svelte"
                 }

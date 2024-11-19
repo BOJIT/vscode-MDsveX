@@ -26,6 +26,10 @@
         },
         {
             "include": "#svelte-js-expression"
+        },
+        {
+            "include": "text.html.markdown",
+            "comment": "Default syntax match is markdown"
         }
     ],
     "repository": {
@@ -72,7 +76,7 @@
         "svelte-tag": {
             "patterns": [
                 {
-                    "begin": "<",
+                    "begin": "<(?!\\!)",
                     "end": ">",
                     "name": "embedded.svelte-tag"
                 }
