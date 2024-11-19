@@ -46,12 +46,12 @@
         "grammars": [
             {
                 "language": "MDsveX",
-                "scopeName": "text.html.markdown.svelte",
+                "scopeName": "text.html.mdsvex",
                 "path": "./syntaxes/MDsveX.tmLanguage.json",
                 "embeddedLanguages": {
                     "source.svelte": "svelte",
-                    "source.js": "javascript",
                     "text.html.markdown": "markdown",
+                    "source.js": "javascript",
                     "meta.embedded.block.frontmatter": "yaml",
                     "meta.tag.svelte": "svelte"
                 }

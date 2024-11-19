@@ -31,7 +31,7 @@ const vscodeOnigurumaLib = loadWASM(wasmBin).then(() => {
 const registry = new Registry({
     onigLib: vscodeOnigurumaLib,
     loadGrammar: async (scopeName) => {
-        if (scopeName === 'text.html.markdown.svelte') {
+        if (scopeName === 'text.html.mdsvex') {
             const p = path.join(__dirname, '../context.tmLanguage.json')
             return readFile(p).then(data => parseRawGrammar(data.toString(), p));
         }
@@ -51,7 +51,7 @@ function readFile(path: string) {
 /*-------------------------------- Exports -----------------------------------*/
 
 export async function loadTextmateGrammar() {
-    return await registry.loadGrammar('text.html.markdown.svelte');
+    return await registry.loadGrammar('text.html.mdsvex');
 }
 
 export function isInsideSvelteRegion(

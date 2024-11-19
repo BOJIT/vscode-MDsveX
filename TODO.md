@@ -1,12 +1,3 @@
----
-title: DIY E-Drums
-date: "16-05-2020"
-published: true
-tile:
-  type: image
-  image: /tiles/2020-05-16-DIY_E_Drums.PNG
----
-
 # TODO
 
 ## Known Issues
@@ -23,10 +14,8 @@ tile:
 
 - [ ] Still unsure which handler handles each case
 
-- [ ] Check line-ending handling
+- [x] Check line-ending handling
 
 - [x] Code blocks should always be Markdown
 
-```bash
-this is a code block
-```
+- [ ] Get syntax highlighting and commenting to match existing

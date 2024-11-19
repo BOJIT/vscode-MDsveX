@@ -1,114 +1,104 @@
 {
     "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
     "name": "Markdown Svelte",
-    "scopeName": "text.html.markdown.svelte",
+    "scopeName": "text.html.mdsvex",
     "patterns": [
         {
-            "include": "#svelte",
-            "name": "source.svelte"
+            "include": "#markdown-front-matter"
         },
         {
-            "include": "#markdown"
+            "include": "#markdown-block-code"
+        },
+        {
+            "include": "#markdown-inline-code"
+        },
+        {
+            "include": "#svelte-script-section"
+        },
+        {
+            "include": "#svelte-style-section"
+        },
+        {
+            "include": "#svelte-tag"
+        },
+        {
+            "include": "#svelte-template"
+        },
+        {
+            "include": "#svelte-js-expression"
         }
     ],
     "repository": {
-        "svelte": {
+        "svelte-script-section": {
             "patterns": [
                 {
-                    "include": "#markdown-front-matter"
-                },
-                {
-                    "include": "#markdown-block-code"
-                },
-                {
-                    "include": "#markdown-inline-code"
-                },
-                {
-                    "include": "#svelte-script-section"
-                },
-                {
-                    "include": "#svelte-style-section"
-                },
-                {
-                    "include": "#svelte-tag"
-                },
-                {
-                    "include": "#svelte-js-expression"
+                    "begin": "<script[^>]*>",
+                    "end": "<\/script>",
+                    "name": "source.svelte"
                 }
-            ],
-            "repository": {
-                "svelte-script-section": {
-                    "patterns": [
-                        {
-                            "begin": "<script[^>]*>",
-                            "end": "<\/script>",
-                            "name": "source.svelte"
-                        }
-                    ]
-                },
-                "svelte-style-section": {
-                    "patterns": [
-                        {
-                            "begin": "<style[^>]*>",
-                            "end": "<\/style>",
-                            "name": "source.svelte"
-                        }
-                    ]
-                },
-                "svelte-tag": {
-                    "patterns": [
-                        {
-                            "begin": "<",
-                            "end": ">",
-                            "name": "source.svelte"
-                        }
-                    ]
-                },
-                "svelte-template": {
-                    "patterns": [
-                        {
-                            "begin": "(?!^#{1,}\\s+?)(?:.*?)(?={[#/])",
-                            "end": "(?<=}|$)",
-                            "contentName": "source.svelte"
-                        }
-                    ]
-                },
-                "svelte-js-expression": {
-                    "patterns": [
-                        {
-                            "begin": "(?!^#{1,}\\s+?)(?:.*?)(?={[^#/])",
-                            "end": "(?<=}|$)",
-                            "contentName": "expr.source.svelte"
-                        }
-                    ]
-                },
-                "markdown-inline-code": {
-                    "patterns": [
-                        {
-                            "match": "`.*?`",
-                            "name": "text.html.markdown"
-                        }
-                    ]
-                },
-                "markdown-block-code": {
-                    "patterns": [
-                        {
-                            "begin": "(^|\\G)(\\s*)(`{3,}|~{3,})\\s*(?=([^`]*)?$)",
-                            "end": "(^|\\G)(\\2|\\s{0,3})(\\3)\\s*$",
-                            "name": "markup.fenced_code.block.markdown"
-                        }
-                    ]
-                },
-                "markdown-front-matter": {
-                    "patterns": [
-                        {
-                            "begin": "\\A(?=(-{3,}))",
-                            "end": "(?=(-{3,}))",
-                            "name": "frontmatter.markdown"
-                        }
-                    ]
+            ]
+        },
+        "svelte-style-section": {
+            "patterns": [
+                {
+                    "begin": "<style[^>]*>",
+                    "end": "<\/style>",
+                    "name": "source.svelte"
                 }
-            }
+            ]
+        },
+        "svelte-tag": {
+            "patterns": [
+                {
+                    "begin": "<",
+                    "end": ">",
+                    "name": "source.svelte"
+                }
+            ]
+        },
+        "svelte-template": {
+            "patterns": [
+                {
+                    "begin": "(?!^#{1,}\\s+?)(?:.*?)(?={[#/])",
+                    "end": "(?<=}|$)",
+                    "contentName": "source.svelte"
+                }
+            ]
+        },
+        "svelte-js-expression": {
+            "patterns": [
+                {
+                    "begin": "(?!^#{1,}\\s+?)(?:.*?)(?={[^#/])",
+                    "end": "(?<=}|$)",
+                    "contentName": "source.svelte"
+                }
+            ]
+        },
+        "markdown-inline-code": {
+            "patterns": [
+                {
+                    "match": "`.*?`",
+                    "name": "text.html.markdown"
+                }
+            ]
+        },
+        "markdown-block-code": {
+            "patterns": [
+                {
+                    "begin": "(^|\\G)(\\s*)(`{3,}|~{3,})\\s*(?=([^`]*)?$)",
+                    "end": "(^|\\G)(\\2|\\s{0,3})(\\3)\\s*$",
+                    "name": "text.html.markdown"
+                }
+            ]
+        },
+        "markdown-front-matter": {
+            "patterns": [
+                {
+                    "begin": "\\A(?=(-{3,}))",
+                    "end": "(?=(-{3,}))",
+                    "name": "text.html.markdown"
+                }
+            ]
         }
     }
 }
