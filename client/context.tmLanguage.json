@@ -15,6 +15,15 @@
         "svelte": {
             "patterns": [
                 {
+                    "include": "#markdown-front-matter"
+                },
+                {
+                    "include": "#markdown-block-code"
+                },
+                {
+                    "include": "#markdown-inline-code"
+                },
+                {
                     "include": "#svelte-script-section"
                 },
                 {
@@ -22,9 +31,6 @@
                 },
                 {
                     "include": "#svelte-tag"
-                },
-                {
-                    "include": "#svelte-template"
                 },
                 {
                     "include": "#svelte-js-expression"
@@ -52,8 +58,8 @@
                 "svelte-tag": {
                     "patterns": [
                         {
-                            "begin": "(<\\?)\\s*([-_a-zA-Z0-9]+)",
-                            "end": "(\\?>)",
+                            "begin": "<",
+                            "end": ">",
                             "name": "source.svelte"
                         }
                     ]
@@ -72,7 +78,33 @@
                         {
                             "begin": "(?!^#{1,}\\s+?)(?:.*?)(?={[^#/])",
                             "end": "(?<=}|$)",
-                            "contentName": "source.svelte"
+                            "contentName": "expr.source.svelte"
+                        }
+                    ]
+                },
+                "markdown-inline-code": {
+                    "patterns": [
+                        {
+                            "match": "`.*?`",
+                            "name": "text.html.markdown"
+                        }
+                    ]
+                },
+                "markdown-block-code": {
+                    "patterns": [
+                        {
+                            "begin": "(^|\\G)(\\s*)(`{3,}|~{3,})\\s*(?=([^`]*)?$)",
+                            "end": "(^|\\G)(\\2|\\s{0,3})(\\3)\\s*$",
+                            "name": "markup.fenced_code.block.markdown"
+                        }
+                    ]
+                },
+                "markdown-front-matter": {
+                    "patterns": [
+                        {
+                            "begin": "\\A(?=(-{3,}))",
+                            "end": "(?=(-{3,}))",
+                            "name": "frontmatter.markdown"
                         }
                     ]
                 }

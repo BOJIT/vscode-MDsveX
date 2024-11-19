@@ -129,6 +129,7 @@ export function getVirtualMarkdownDocument(document: TextDocument, grammar: IGra
             } else {
                 newDoc = newDoc.concat(line.substring(token.startIndex, token.endIndex));
             }
+            console.log(`line ${i}: token ${j}: ${line.substring(token.startIndex, token.endIndex)}: ${token.scopes}`)
         }
         // Add line endings (only to virtual doc, endings shouldn't matter)
         newDoc = newDoc.concat('\n');
