@@ -41,16 +41,12 @@ let logger: LoggingService;
 /*------------------------------- Functions ----------------------------------*/
 
 function serviceUri(original: string, type: string) {
-    // const uri = vscode.Uri.parse(`embedded-${type}://${type}/${encodeURIComponent(original)}.${type}`, true);
     const fileUri = vscode.Uri.file(`${original}.${type}`);
     const uri = fileUri.with({ scheme: `embedded-${type}` });
-    logger.logInfo(`Original: ${original} `);
-    logger.logInfo("URI", uri);
     return uri;
 }
 
 async function updateVDoc(src: vscode.TextDocument, grammar: IGrammar, fs: VirtualFileSystem): Promise<void> {
-    logger.logDebug("Original VDoc:", src);
     const originalPath = src.uri.path;
 
     // Update Svelte VDoc
@@ -65,21 +61,24 @@ async function updateVDoc(src: vscode.TextDocument, grammar: IGrammar, fs: Virtu
 
     // Debug
     await vscode.workspace.openTextDocument(svelteUri);
-    await vscode.window.showTextDocument(svelteUri, { preview: false, viewColumn: -2, preserveFocus: true });
+
+    // Uncomment for preview of svelte-masked image
+    // await vscode.window.showTextDocument(svelteUri, { preview: false, viewColumn: -2, preserveFocus: true });
 
     // Note that these should be closed at some point! extension is responsible
 
     // HACK: https://github.com/microsoft/vscode/issues/159911
     setTimeout(() => {
         client.diagnostics.set(src.uri, vscode.languages.getDiagnostics(svelteUri));
-    }, 500);
+    }, 1000);
 }
 
 function removeVDoc(src: vscode.TextDocument, fs: VirtualFileSystem): void {
+    const originalPath = src.uri.path;
+
     // Construct VDoc URIs
-    const originalUri = src.uri.toString(true);
-    const svelteUri = serviceUri(originalUri, "svelte");
-    const mdUri = serviceUri(originalUri, "md");
+    const svelteUri = serviceUri(originalPath, "svelte");
+    const mdUri = serviceUri(originalPath, "md");
 
     // Remove entries if they exist
     fs.removeFile(svelteUri);
@@ -91,7 +90,7 @@ function getSectionVDoc(document: vscode.TextDocument, grammar: IGrammar, positi
     const service = isInsideSvelteRegion(document, grammar, document.offsetAt(position)) ? "svelte" : "md";
 
     // Return URI that points to map object
-    return serviceUri(document.uri.toString(true), service);
+    return serviceUri(document.uri.path, service);
 }
 
 /*-------------------------------- Exports -----------------------------------*/
@@ -135,50 +134,51 @@ export async function activate(context: vscode.ExtensionContext) {
                 removeVDoc(doc, vfs);
             },
 
-            handleDiagnostics(uri, diagnostics, next) {
-                logger.logInfo("Got Diagnostics");
+            provideHover: async (document, position, token, next) => {
+                const vdocUri = getSectionVDoc(document, grammar, position);
+                logger.logInfo("In Hover Provider: ", vdocUri);
+                const response = await vscode.commands.executeCommand<vscode.Hover>(
+                    'vscode.executeHoverProvider',
+                    vdocUri,
+                    position,
+                );
+                logger.logInfo("Hover: ", response);
+                return response;
             },
-
-            // provideHover: async (document, position, token, next) => {
-            //     // console.log("In provideHover")
-
-            //     const vdocUri = prepareVirtualDocuments(document, grammar, position, vdocMap);
-            //     await window.showTextDocument(vdocUri, { preview: false });
-
-            //     return await commands.executeCommand<Hover>(
-            //         'vscode.executeHoverProvider',
-            //         vdocUri,
-            //         position,
-            //     );
-            // },
 
             provideDefinition: async (document, position, token, next) => {
                 const vdocUri = getSectionVDoc(document, grammar, position);
-                let response = await vscode.commands.executeCommand<vscode.Location[]>(
+                return await vscode.commands.executeCommand<vscode.Location[]>(
                     'vscode.executeDefinitionProvider',
                     vdocUri,
                     position,
                 );
-                // console.log(response);
-                return response;
+                // TODO if returned definition is in virtual file, redirect!
+            },
+
+            provideReferences: async (document, position, options, token, next) => {
+                const vdocUri = getSectionVDoc(document, grammar, position);
+                return await vscode.commands.executeCommand<vscode.Location[]>(
+                    'vscode.executeReferenceProvider',
+                    vdocUri,
+                    position,
+                );
+                // TODO if returned definition is in virtual file, redirect!
             },
 
             provideCompletionItem: async (document, position, context, token, next) => {
                 const vdocUri = getSectionVDoc(document, grammar, position);
-
-                let response = await vscode.commands.executeCommand<vscode.CompletionList>(
+                return await vscode.commands.executeCommand<vscode.CompletionList>(
                     'vscode.executeCompletionItemProvider',
                     vdocUri,
                     position,
                     context.triggerCharacter
                 );
-                // console.log(vdocUri);
-                return response;
             },
         }
     };
 
-    // NOTE the server module does nothing, as all requests are forwarded
+    // NOTE the server module currently does nothing, as all requests are forwarded
 
     // Create the language client and start the client.
     client = new LanguageClient(

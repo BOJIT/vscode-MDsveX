@@ -6,16 +6,20 @@
 
 - [x] Update VDocs on every change, not just trigger events
 
-- [ ] Request Forwarding for Intellisense!
+- [x] Request Forwarding for Intellisense! (Requires Svelte Upstream Mod)
 
 - [x] Script tags should be treated as svelte source
 
 - [ ] Nested tags without spacing don't highlight correctly
 
-- [ ] Still unsure which handler handles each case
-
 - [x] Check line-ending handling
 
 - [x] Code blocks should always be Markdown
 
-- [ ] Get syntax highlighting and commenting to match existing
+- [ ] Get syntax highlighting and commenting to match existing MD extension
+
+- [ ] Correctly handle diagnostics update...
+
+- [ ] Get SvelteKit-specific intellisense working...
+
+- [ ] Basic Prettier Formatting?

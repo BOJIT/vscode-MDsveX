@@ -22,8 +22,51 @@ connection.onInitialize((_params: InitializeParams) => {
         capabilities: {
             textDocumentSync: TextDocumentSyncKind.Full,
             definitionProvider: true,
+            hoverProvider: true,
+            // documentFormattingProvider: true,
+            colorProvider: true,
+            documentSymbolProvider: true,
+            referencesProvider: true,
+            selectionRangeProvider: true,
+            linkedEditingRangeProvider: true,
+            implementationProvider: true,
+            typeDefinitionProvider: true,
+            inlayHintProvider: true,
+            callHierarchyProvider: true,
+            foldingRangeProvider: true,
             completionProvider: {
-                resolveProvider: true
+                resolveProvider: true,
+                triggerCharacters: [
+                    '.',
+                    '"',
+                    "'",
+                    '`',
+                    '/',
+                    '@',
+                    '<',
+
+                    // Emmet
+                    '>',
+                    '*',
+                    '#',
+                    '$',
+                    '+',
+                    '^',
+                    '(',
+                    '[',
+                    '@',
+                    '-',
+                    // No whitespace because
+                    // it makes for weird/too many completions
+                    // of other completion providers
+
+                    // Svelte
+                    ':',
+                    '|'
+                ],
+                completionItem: {
+                    labelDetailsSupport: true
+                }
             }
         }
     };
