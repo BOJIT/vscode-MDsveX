@@ -35,7 +35,6 @@ const registry = new Registry({
             const p = path.join(__dirname, '../context.tmLanguage.json')
             return readFile(p).then(data => parseRawGrammar(data.toString(), p));
         }
-        console.log(`Unknown scope name: ${scopeName}`);
         return null;
     }
 });

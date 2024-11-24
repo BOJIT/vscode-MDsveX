@@ -5,3 +5,4 @@ client/server
 .vscode-test
 .vscode/settings.json
 .vscode/javascript.code-snippets
+*.vsix

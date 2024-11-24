@@ -16,6 +16,7 @@ import * as vscode from 'vscode';
 import {
     LanguageClient,
     LanguageClientOptions,
+    RevealOutputChannelOn,
     ServerOptions,
     Trace,
     TransportKind
@@ -29,34 +30,42 @@ import {
     loadTextmateGrammar,
 } from './embeddedLanguage';
 
-import VirtualFileSystem from './virtualFileSystem';
+import { VirtualFileSystem } from './VirtualFileSystem';
+import { LoggingService } from './LoggingService';
 
 /*--------------------------------- State ------------------------------------*/
 
 let client: LanguageClient;
+let logger: LoggingService;
 
 /*------------------------------- Functions ----------------------------------*/
 
 function serviceUri(original: string, type: string) {
-    return vscode.Uri.parse(`embedded-${type}://${type}/${encodeURIComponent(original)}.${type}`);
+    // const uri = vscode.Uri.parse(`embedded-${type}://${type}/${encodeURIComponent(original)}.${type}`, true);
+    const fileUri = vscode.Uri.file(`${original}.${type}`);
+    const uri = fileUri.with({ scheme: `embedded-${type}` });
+    logger.logInfo(`Original: ${original} `);
+    logger.logInfo("URI", uri);
+    return uri;
 }
 
 async function updateVDoc(src: vscode.TextDocument, grammar: IGrammar, fs: VirtualFileSystem): Promise<void> {
-    const originalUri = src.uri.toString(true);
+    logger.logDebug("Original VDoc:", src);
+    const originalPath = src.uri.path;
 
     // Update Svelte VDoc
-    const svelteUri = serviceUri(originalUri, "svelte");
+    const svelteUri = serviceUri(originalPath, "svelte");
     const svelteDoc = getVirtualSvelteDocument(src, grammar);
     fs.updateFile(svelteUri, svelteDoc);
 
     // Create MD VDoc
-    const mdUri = serviceUri(originalUri, "md");
+    const mdUri = serviceUri(originalPath, "md");
     const mdDoc = getVirtualMarkdownDocument(src, grammar);
     fs.updateFile(mdUri, mdDoc);
 
     // Debug
     await vscode.workspace.openTextDocument(svelteUri);
-    // await vscode.window.showTextDocument(svelteUri, { preview: false, viewColumn: -2, preserveFocus: true });
+    await vscode.window.showTextDocument(svelteUri, { preview: false, viewColumn: -2, preserveFocus: true });
 
     // Note that these should be closed at some point! extension is responsible
 
@@ -88,6 +97,9 @@ function getSectionVDoc(document: vscode.TextDocument, grammar: IGrammar, positi
 /*-------------------------------- Exports -----------------------------------*/
 
 export async function activate(context: vscode.ExtensionContext) {
+    logger = new LoggingService();
+    logger.setOutputLevel("DEBUG");
+
     // The server is implemented in node
     const serverModule = context.asAbsolutePath(path.join('server', 'out', 'server.js'));
 
@@ -111,6 +123,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
     const clientOptions: LanguageClientOptions = {
         documentSelector: [{ scheme: 'file', language: 'MDsveX' }],
+        revealOutputChannelOn: RevealOutputChannelOn.Never,
         middleware: {
             didOpen: (doc: vscode.TextDocument, next: (doc: vscode.TextDocument) => void): void => {
                 updateVDoc(doc, grammar, vfs);
@@ -123,7 +136,7 @@ export async function activate(context: vscode.ExtensionContext) {
             },
 
             handleDiagnostics(uri, diagnostics, next) {
-                console.log("Got Diagnostics");
+                logger.logInfo("Got Diagnostics");
             },
 
             // provideHover: async (document, position, token, next) => {

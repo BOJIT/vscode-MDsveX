@@ -17,7 +17,7 @@ import { EventEmitter, TextDocumentContentProvider, Uri } from "vscode";
 
 /*------------------------------- Primary Class ------------------------------*/
 
-class VirtualFileSystem implements TextDocumentContentProvider {
+export class VirtualFileSystem implements TextDocumentContentProvider {
     #map = new Map<string, string>();
 
     onDidChangeEmitter = new EventEmitter<Uri>();
@@ -36,7 +36,3 @@ class VirtualFileSystem implements TextDocumentContentProvider {
         this.onDidChangeEmitter.fire(uri);
     }
 }
-
-/*---------------------------------- Exports ---------------------------------*/
-
-export default VirtualFileSystem;
